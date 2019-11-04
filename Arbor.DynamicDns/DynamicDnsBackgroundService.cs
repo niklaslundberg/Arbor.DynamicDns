@@ -11,14 +11,20 @@ namespace Arbor.DynamicDns
         private readonly DynamicDnsClient _dynamicDnsClient;
         private readonly IpFetcher _ipFetcher;
         private readonly ILogger _logger;
+        private readonly DnsStatus _dnsStatus;
 
         private CancellationToken _stoppingToken;
 
-        public DynamicDnsBackgroundService(IpFetcher ipFetcher, DynamicDnsClient dynamicDnsClient, ILogger logger)
+        public DynamicDnsBackgroundService(
+            IpFetcher ipFetcher,
+            DynamicDnsClient dynamicDnsClient,
+            ILogger logger,
+            DnsStatus dnsStatus)
         {
             _ipFetcher = ipFetcher;
             _dynamicDnsClient = dynamicDnsClient;
             _logger = logger;
+            _dnsStatus = dnsStatus;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,12 +43,16 @@ namespace Arbor.DynamicDns
 
                     if (ipAddress is {})
                     {
-                        await _dynamicDnsClient.Update(ipAddress, _stoppingToken);
+                        _dnsStatus.LatestIpAddress = ipAddress.ToString();
+                        _dnsStatus.UpdatedAtUtc = DateTime.UtcNow;
+                      var result =  await _dynamicDnsClient.Update(ipAddress, _stoppingToken);
+                      _dnsStatus.LatestResponse = result.Message;
                         _logger.Information("Successfully updated public IP {Address}", ipAddress);
                     }
                 }
                 catch (Exception e)
                 {
+                    _dnsStatus.LatestResponse = e.Message;
                     _logger.Error(e, "Could not update IP address");
                 }
 

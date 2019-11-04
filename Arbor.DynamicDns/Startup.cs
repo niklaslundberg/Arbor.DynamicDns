@@ -27,6 +27,7 @@ namespace Arbor.DynamicDns
             services.AddHttpClient();
             services.AddSingleton<DynamicDnsClient>();
             services.AddSingleton<IpFetcher>();
+            services.AddSingleton<DnsStatus>();
             services.AddSingleton<IHostedService, DynamicDnsBackgroundService>();
         }
 

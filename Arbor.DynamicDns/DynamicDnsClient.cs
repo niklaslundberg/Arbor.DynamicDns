@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +15,8 @@ namespace Arbor.DynamicDns
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger _logger;
 
-        public DynamicDnsClient(IHttpClientFactory httpClientFactory, DynamicDnsSettings dynamicDnsSettings, ILogger logger)
+        public DynamicDnsClient(IHttpClientFactory httpClientFactory, DynamicDnsSettings dynamicDnsSettings,
+            ILogger logger)
         {
             _httpClientFactory = httpClientFactory;
             _dynamicDnsSettings = dynamicDnsSettings;
@@ -36,15 +38,16 @@ namespace Arbor.DynamicDns
             var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
 
             var client = _httpClientFactory.CreateClient();
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
 
             var httpResponseMessage = await client.SendAsync(request, cancellationToken);
 
-            var responseBody = await httpResponseMessage.Content.ReadAsStringAsync();
+            string responseBody = await httpResponseMessage.Content.ReadAsStringAsync();
 
-            _logger.Information("Http response status code: {StatusCode}, body {Body}", httpResponseMessage.StatusCode, responseBody);
+            _logger.Information("Http response status code: {StatusCode}, body {Body}", httpResponseMessage.StatusCode,
+                responseBody);
 
-            return new UpdateResult();
+            return new UpdateResult(responseBody);
         }
     }
 }

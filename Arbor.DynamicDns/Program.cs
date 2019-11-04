@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using Serilog.Core;
 
 namespace Arbor.DynamicDns
 {
@@ -11,20 +10,20 @@ namespace Arbor.DynamicDns
     {
         public static void Main(string[] args)
         {
-            using var logger = new LoggerConfiguration().WriteTo.Console().WriteTo.Seq("http://localhost:5341")
+            using var logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.Seq("http://localhost:5341")
                 .CreateLogger();
 
 
-            CreateHostBuilder(args,logger).Build().Run();
+            CreateHostBuilder(args, logger).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args, ILogger logger)
-        {
-            return Host.CreateDefaultBuilder(args)
+        public static IHostBuilder CreateHostBuilder(string[] args, ILogger logger) =>
+            Host.CreateDefaultBuilder(args)
                 .ConfigureServices(services => { services.AddSingleton(logger); })
                 .ConfigureAppConfiguration(builder => { builder.AddJsonFile("appsettings.user.json", true); })
                 .UseSerilog()
                 .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
-        }
     }
 }
